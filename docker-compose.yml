@@ -1,0 +1,29 @@
+version: '3.1'
+services:
+  nginx:
+    image: nginx:1.17.1-alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./docker/nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./code:/usr/share/app
+    depends_on:
+      - fpm
+    links:
+      - fpm
+  fpm:
+    build:
+      context: .
+      dockerfile: docker/php-fpm/php-fpm.Dockerfile
+    volumes: 
+      - ./code:/usr/share/app
+  mysql:
+    image: mysql
+    ports:
+      - "3306:3306"
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    volumes:
+      - ./docker/mysql/data:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: example
