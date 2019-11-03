@@ -17,15 +17,22 @@ use Skeleton\Http\Router\Exception\RouteParameterNotPassedException;
 use Skeleton\Http\Router\Exception\RequestNotMatchedException;
 use Skeleton\Http\Router\Exception\RouteNotFoundException;
 
+// Actions
+use App\Http\Actions\MainAction;
+use App\Http\Actions\BlogWithNewsAction;
+
+// Action resolver
+use Skeleton\Http\ActionResolver;
+
 // Routes
 $routes = new RouteCollection;
 
 // Сначала более уникальный случай, потом более общий
-$routes->get('blogWithNews', '/blog/{id}/news/{news_id}', function ($request) {
-    $attributes = $request->getAttributes();
-    list('id' => $id, 'news_id' => $news_id) = $attributes;
-    return new Response('<h1>This is blog ' . $id . ' with news_id ' . $news_id . '</h1>');
-}, ['id' => '\d+']);
+
+// class call
+$routes->get('blogWithNews', '/blog/{id}/news/{news_id}', BlogWithNewsAction::class, ['id' => '\d+']);
+
+// anonymous function call
 $routes->get('blog', '/blog/{id}', function ($request) {
     $attributes = $request->getAttributes();
     list('id' => $id) = $attributes;
@@ -44,9 +51,9 @@ $routes->get('posts', '/posts/{id}/show', function ($request) {
     list('id' => $id) = $attributes;
     return new Response('<h1>This is post ' . $id. ' of posts route'. '</h1>');
 }, ['id' => '\d+']);
-$routes->get('home', '/', function ($request) {
-    return new Response('<h1>Home route</h1>');
-});
+
+// or another class call
+$routes->get('home', '/', MainAction::class);
 
 $router = new Router($routes);
 
@@ -59,13 +66,16 @@ try {
     foreach ($result->getAttributes() as $attribute => $value) {
         $request = $request->withAttribute($attribute, $value);
     }
-    $action = $result->getHandler();
+    $resolver = new ActionResolver();
+    $action = $resolver->resolve($result->getHandler());
     $response = $action($request);
 } catch (RouteParameterNotPassedException $e) {
     $response = new JsonResponse(['error' => $e->getMessage(), 'status' => 500]);
 } catch (RequestNotMatchedException $e) {
     $response = new JsonResponse(['error' => $e->getMessage(), 'status' => 500]);
 } catch (RouteNotFoundException $e) {
+    $response = new JsonResponse(['error' => $e->getMessage(), 'status' => 404]);
+} catch (Exception $e) {
     $response = new JsonResponse(['error' => $e->getMessage(), 'status' => 404]);
 }
 
