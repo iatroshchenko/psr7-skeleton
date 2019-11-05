@@ -8,7 +8,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use Skeleton\Http\Router\Exception\RequestNotMatchedException;
 use Skeleton\Http\Router\Exception\RouteNotFoundException;
 
-class Router
+class Router implements RouterInterface
 {
     private $routes;
 

@@ -40,6 +40,8 @@
       <path value="$PROJECT_DIR$/code/vendor/phpunit/php-token-stream" />
       <path value="$PROJECT_DIR$/code/vendor/phpunit/php-code-coverage" />
       <path value="$PROJECT_DIR$/code/vendor/sebastian/version" />
+      <path value="$PROJECT_DIR$/code/vendor/psr/log" />
+      <path value="$PROJECT_DIR$/code/vendor/aura/router" />
     </include_path>
   </component>
   <component name="PhpProjectSharedConfiguration" php_language_level="7.2" />
