@@ -24,23 +24,7 @@ class Pipeline
 
     public function __invoke(ServerRequestInterface $request, callable $default): ResponseInterface
     {
-        return $this->next($request, $default);
-    }
-
-    public function next(ServerRequestInterface $request, callable $default): ResponseInterface
-    {
-        if ($this->queue->isEmpty()) {
-            return $default($request);
-        }
-
-        $current = $this->queue->dequeue();
-        return $current($request, function (ServerRequestInterface $request) use ($default) {
-            /*
-                Если это будет middleware, эта функция будет вызвана
-                Если action, она будет проигнорирована, поскольку код внутри action
-                Не предполагает вызова $next()
-            */
-            return $this->next($request, $default);
-        });
+        $delegate = new Next(clone $this->queue, $default);
+        return $delegate($request);
     }
 }
