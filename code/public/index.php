@@ -17,12 +17,16 @@ use Skeleton\Http\Router\AuraRouterAdapter;
 
 // exceptions
 use Skeleton\Http\Router\Exception\RouteParameterNotPassedException;
-use Skeleton\Http\Router\Exception\RequestNotMatchedException;
-use Skeleton\Http\Router\Exception\RouteNotFoundException;
+use Skeleton\Http\Router\Exception\UnknownRouteException;
+use Skeleton\Http\Router\Exception\GenerateUnknownRoute;
 
 // Middleware
+use Skeleton\Http\Middleware\ErrorHandlerMiddleware;
 use App\Http\Middleware\BasicAuthMiddleware;
 use App\Http\Middleware\ProfilerMiddleware;
+use Skeleton\Http\Middleware\FallbackMiddleware;
+use Skeleton\Http\Middleware\RouterMiddleware;
+use Skeleton\Http\Middleware\DispatchMiddleware;
 
 // Pipeline
 use Skeleton\Http\Pipeline\Pipeline;
@@ -31,7 +35,7 @@ use Skeleton\Http\Pipeline\Pipeline;
 use App\Http\Actions\Cabinet\IndexAction as CabinetIndexAction;
 
 // Action resolver
-use Skeleton\Http\ActionResolver;
+use Skeleton\Http\Pipeline\MiddlewareResolver;
 
 // Routes
 //$routes = new RouteCollection;
@@ -78,143 +82,32 @@ $routes = $aura->getMap();
  *
  * */
 
+// params
+$users = [
+    'Ivan' => '0000000'
+];
+$debug = true;
+
 // Routing Setup
-$routes->get('cabinet', '/cabinet', CabinetIndexAction::class);
+$routes->get('cabinet', '/cabinet', [
+    new BasicAuthMiddleware($users),
+    CabinetIndexAction::class
+]);
 
 // Initialization
 $router = new AuraRouterAdapter($aura);
+$resolver = new MiddlewareResolver();
+$pipeline = new Pipeline($resolver, new FallbackMiddleware());
+
+/* Global middleware */
+$pipeline->pipe(new ErrorHandlerMiddleware($debug));
+$pipeline->pipe(ProfilerMiddleware::class);
+$pipeline->pipe(new RouterMiddleware($router, $resolver));
+$pipeline->pipe(new DispatchMiddleware($resolver));
+
+// Running
 $request = ServerRequestFactory::fromGlobals();
-
-// Middleware
-/*
- * $action = new Action\CabinetAction();
- * $action1 = new Action\CabinetAction1();
- * $action2 = new Action\CabinetAction2();
- *
- * $middleware = new Middleware\BasicAuthMiddleware();
- *
- * $response = $middleware($request, $action);
- * $response1 = $middleware1($request, $action);
- * $response2 = $middleware2($request, $action);
- *
- *
- * */
-
-// Action
-try {
-    $result = $router->match($request);
-    foreach ($result->getAttributes() as $attribute => $value) {
-        $request = $request->withAttribute($attribute, $value);
-    }
-    $resolver = new ActionResolver();
-
-    // getting handler. (returns callable)
-    $action = $resolver->resolve($result->getHandler());
-
-    /*
-     * Middleware!!
-     *
-     * Мы знаем что Action($request) :Response
-     * action принимает request возвращает response
-     *
-     *
-     * $middleware = new Middleware\BasicAuthMiddleware;
-     * $response = $middleware($request, $action);
-     *
-     *
-     * class Middleware {
-     *
-     *      public function __invoke($request, $handler) {
-     *
-     *          if ($something == true) {
-     *              $handler($request);
-     *          }
-     *
-     *      }
-     *
-     * }
-     *
-     * class FinalMiddleware {
-     *
-     *      public function __invoke() {
-     *
-     *      }
-     *
-     * }
-     *
-     *
-     * $response = $middleware($request, function ($request) {
-     *
-     *      return $middleware2($request, function ($request) {
-     *
-     *          return $middleware3($request, function ($request) {
-     *
-     *              if (something ) ...
-     *
-     *              return $action($request);
-     *
-     *          })
-     *
-     *      })
-     *
-     * })
-     *
-     * class AuthMiddleware {
-     *
-     *      public function __invoke($request, $action) {
-     *
-     *          if (Auth::isAuth()) {
-     *
-     *              return $action($request);
-     *
-     *          } else {
-     *
-     *              return redirect('/login');
-     *
-     *          }
-     *
-     *      }
-     *
-     * }
-     *
-     *
-     *
-     * */
-
-    /*
-     *
-     * $pipeline = new Pipeline();
-     * $pipeline->pipe($middleware1);
-     * $pipeline->pipe($middleware2);
-     * $pipeline->pipe($action);
-     * return $pipeline($request);
-     *
-     * */
-
-    $users = [
-        'Ivan' => '0000000'
-    ];
-
-    $authMiddleware = new BasicAuthMiddleware($users);
-    $profilerMiddleware = new ProfilerMiddleware();
-    $pipeline = new Pipeline();
-    $pipeline->pipe($profilerMiddleware);
-    $pipeline->pipe($authMiddleware);
-    $pipeline->pipe($action);
-
-    $response = $pipeline($request, function () {
-        return new JsonResponse('Looks like an action has not been passed to pipeline');
-    });
-
-} catch (RouteParameterNotPassedException $e) {
-    $response = new JsonResponse(['error' => $e->getMessage(), 'status' => 500]);
-} catch (RequestNotMatchedException $e) {
-    $response = new JsonResponse(['error' => $e->getMessage(), 'status' => 500]);
-} catch (RouteNotFoundException $e) {
-    $response = new JsonResponse(['error' => $e->getMessage(), 'status' => 404]);
-} catch (Exception $e) {
-    $response = new JsonResponse(['error' => $e->getMessage(), 'status' => 404]);
-}
+$response = $pipeline->run($request);
 
 // Postprocessing
 $response = $response->withHeader('X-Dev', 'iatrodev');

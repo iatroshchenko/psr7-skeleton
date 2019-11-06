@@ -27,6 +27,7 @@ class Next
         }
 
         $current = $this->queue->dequeue();
+
         return $current($request, function (ServerRequestInterface $request) {
             /*
                 Если это будет middleware, эта функция будет вызвана

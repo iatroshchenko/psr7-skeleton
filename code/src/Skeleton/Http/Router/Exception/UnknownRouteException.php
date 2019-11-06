@@ -4,7 +4,7 @@ namespace Skeleton\Http\Router\Exception;
 
 use Psr\Http\Message\ServerRequestInterface;
 
-class RequestNotMatchedException extends \LogicException
+class UnknownRouteException extends \LogicException
 {
     private $request;
 
@@ -15,7 +15,7 @@ class RequestNotMatchedException extends \LogicException
 
     public function __construct(ServerRequestInterface $request)
     {
-        parent::__construct('Matches not found.');
+        parent::__construct('Unknown route');
         $this->request = $request;
     }
 }

@@ -4,7 +4,7 @@
 namespace Test\Skeleton\Http;
 
 use Psr\Http\Message\ServerRequestInterface;
-use Skeleton\Http\Router\Exception\RequestNotMatchedException;
+use Skeleton\Http\Router\Exception\UnknownRouteException;
 use Skeleton\Http\Router\RouteCollection;
 use Skeleton\Http\Router\Router;
 
@@ -37,7 +37,7 @@ class RouterTest extends TestCase
         $routes = new Routecollection();
         $routes->get('blog', '/blog', 'handler_get');
         $router = new Router($routes);
-        $this->expectException(RequestNotMatchedException::class);
+        $this->expectException(UnknownRouteException::class);
         $router->match($this->buildRequest('POST', '/blog'));
     }
 
@@ -58,7 +58,7 @@ class RouterTest extends TestCase
         $routes->get($name = 'blog_show', '/blog/{id}', 'handler', ['id' => '\d+']);
         $router = new Router($routes);
 
-        $this->expectException(RequestNotMatchedException::class);
+        $this->expectException(UnknownRouteException::class);
         $router->match($this->buildRequest('GET', '/blog/slug'));
     }
 

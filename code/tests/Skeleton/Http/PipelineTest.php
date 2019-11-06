@@ -5,7 +5,7 @@ namespace Test\Skeleton\Http;
 
 
 use PHPUnit\Framework\TestCase;
-use Skeleton\Http\Pipeline\Pipeline;
+use Skeleton\Http\Pipeline\BasePipeline;
 use Psr\Http\Message\RequestInterface;
 use Zend\Diactoros\Response\JsonResponse;
 use Zend\Diactoros\ServerRequest;
@@ -39,7 +39,7 @@ class PipelineTest extends TestCase
 {
     public function testPipeline()
     {
-        $pipeline = new Pipeline();
+        $pipeline = new BasePipeline();
 
         $pipeline->pipe(new TestMiddleware1());
         $pipeline->pipe(new TestMiddleware2());

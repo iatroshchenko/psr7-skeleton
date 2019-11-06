@@ -5,26 +5,26 @@ namespace Skeleton\Http\Pipeline;
 
 
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Message\ResponseInterface;
-use SplQueue as Queue;
 
-class Pipeline
+class Pipeline extends BasePipeline
 {
-    private $queue = [];
+    private $resolver;
+    private $fallback;
 
-    public function __construct()
+    public function __construct(MiddlewareResolver $resolver, callable $fallback)
     {
-        $this->queue = new Queue;
+        parent::__construct();
+        $this->resolver = $resolver;
+        $this->fallback = $fallback;
     }
 
-    public function pipe(callable $middleware): void
+    public function pipe($handlers): void
     {
-        $this->queue->enqueue($middleware);
+        parent::pipe($this->resolver->resolve($handlers));
     }
 
-    public function __invoke(ServerRequestInterface $request, callable $default): ResponseInterface
+    public function run(ServerRequestInterface $request)
     {
-        $delegate = new Next(clone $this->queue, $default);
-        return $delegate($request);
+        return $this($request, $this->fallback);
     }
 }

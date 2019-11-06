@@ -3,7 +3,7 @@
 
 namespace Skeleton\Http\Router\Exception;
 
-class RouteNotFoundException extends \LogicException
+class GenerateUnknownRoute extends \LogicException
 {
     private $name;
     private $params;

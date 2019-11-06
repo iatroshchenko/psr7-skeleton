@@ -5,8 +5,8 @@ namespace Skeleton\Http\Router;
 
 
 use Psr\Http\Message\ServerRequestInterface;
-use Skeleton\Http\Router\Exception\RequestNotMatchedException;
-use Skeleton\Http\Router\Exception\RouteNotFoundException;
+use Skeleton\Http\Router\Exception\UnknownRouteException;
+use Skeleton\Http\Router\Exception\GenerateUnknownRoute;
 
 class Router implements RouterInterface
 {
@@ -23,7 +23,7 @@ class Router implements RouterInterface
             if ($result = $route->match($request)) return $result;
         }
 
-        throw new RequestNotMatchedException($request);
+        throw new UnknownRouteException($request);
     }
 
     public function generate(string $name, array $params = []): string
@@ -35,6 +35,6 @@ class Router implements RouterInterface
             if (null !== $url = $route->generate($name, $arguments)) return $url;
         }
 
-        throw new RouteNotFoundException($name, $params);
+        throw new GenerateUnknownRoute($name, $params);
     }
 }

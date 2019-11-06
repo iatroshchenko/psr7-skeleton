@@ -6,8 +6,8 @@ namespace Skeleton\Http\Router;
 use Aura\Router\Exception\RouteNotFound;
 use Aura\Router\RouterContainer;
 use Psr\Http\Message\ServerRequestInterface;
-use Skeleton\Http\Router\Exception\RequestNotMatchedException;
-use Skeleton\Http\Router\Exception\RouteNotFoundException;
+use Skeleton\Http\Router\Exception\UnknownRouteException;
+use Skeleton\Http\Router\Exception\GenerateUnknownRoute;
 
 
 class AuraRouterAdapter implements RouterInterface
@@ -25,7 +25,7 @@ class AuraRouterAdapter implements RouterInterface
         if ($route = $matcher->match($request)) {
             return new Result($route->name, $route->handler, $route->attributes);
         }
-        throw new RequestNotMatchedException($request);
+        throw new UnknownRouteException($request);
     }
 
     public function generate(string $name, array $params = []): string
@@ -34,7 +34,7 @@ class AuraRouterAdapter implements RouterInterface
         try {
             return $generator->generate($name, $params);
         } catch (RouteNotFound $e) {
-            throw new RouteNotFoundException($name, $params);
+            throw new GenerateUnknownRoute($name, $params);
         }
     }
 }
