@@ -18,15 +18,18 @@ class BasicAuthMiddleware
         $this->users = $users;
     }
 
+    public function credentialsValid($username, $password):bool
+    {
+        return $username && $password && isset($this->users[$username]) && $this->users[$username] == $password;
+    }
+
     public function __invoke(ServerRequestInterface $request, callable $next)
     {
         $username = $request->getServerParams()['PHP_AUTH_USER'] ?? null;
         $password = $request->getServerParams()['PHP_AUTH_PW'] ?? null;
 
-        if ($username && $password && isset($this->users[$username]) && $this->users[$username] == $password) {
-            return $next($request->withAttribute(self::ATTRIBUTE, $username));
-        } else {
-            return new EmptyResponse(401, ['WWW-Authenticate' => 'Basic realm=Restricted area']);
-        }
+        return $this->credentialsValid($username, $password) ?
+            $next($request->withAttribute(self::ATTRIBUTE, $username)) :
+            new EmptyResponse(401, ['WWW-Authenticate' => 'Basic realm=Restricted area']);
     }
 }

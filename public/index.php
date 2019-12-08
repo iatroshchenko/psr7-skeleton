@@ -84,7 +84,8 @@ $routes = $aura->getMap();
 
 // params
 $users = [
-    'Ivan' => '0000000'
+    'Ivan' => '0000000',
+    'Justin' => 'jjjj'
 ];
 $debug = true;
 
